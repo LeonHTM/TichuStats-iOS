@@ -1,6 +1,9 @@
 ## **iOS Client for the TichuStats App**
 **TichuStats is the ultimate companion app for the popular card game Tichu. TichuStats makes it easy to keep score of your games and analyze your performance. It is made by fans for fans.**
 
+
+![alt text](https://tichustats.app/static/content/ipad.iphone.play.won.png)
+
 ### **Features:**
 - **Score Tracker** for your Tichu Games with full customization and editing of past rounds
 - Friends system to quickly add friends to games
