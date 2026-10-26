@@ -139,6 +139,15 @@ struct GameSummaryListView: View {
         .frame(width: 50, alignment: .leading)
         .foregroundStyle(isDoubleWin ? Color.green : Color.primary)
     }
+    
+    private func pointsRow(delta: Int, cumulative: Int, isDoubleWin: Bool) -> some View {
+        HStack(alignment: .center, spacing: 0) {
+            Text(delta >= 0 ? "+\(delta) " : "\(delta)")
+            /*Divider().frame(width:10).foregroundStyle(Color.primary)
+            Text("\(cumulative)")*/
+        }
+        .foregroundStyle(isDoubleWin ? Color.green : Color.primary)
+    }
 
     private func roundLabel(index: Int,
                             round: Round,
@@ -213,7 +222,11 @@ struct GameSummaryListView: View {
                                                 Text(String(format: String(localized: "general.team"), String(1)))
                                                     .fontWeight(.bold)
                                                     .foregroundStyle(Color.accentColor)
+                                          
                                                 Spacer()
+                                                pointsRow(delta: currentRound.tichuPointsTeam1 + currentRound.roundPointsTeam1,
+                                                             cumulative: item.cum1,
+                                                             isDoubleWin: currentRound.doubleWinTeam1)
                                             }
                                             .padding(.top)
                                             .padding(.horizontal)
@@ -227,6 +240,9 @@ struct GameSummaryListView: View {
                                                 Text(String(format: String(localized: "general.team"), String(2)))
                                                     .fontWeight(.bold)
                                                 Spacer()
+                                                pointsRow(delta: currentRound.tichuPointsTeam2 + currentRound.roundPointsTeam2,
+                                                             cumulative: item.cum2,
+                                                             isDoubleWin: currentRound.doubleWinTeam2)
                                             }
                                             .padding(.top)
                                             .padding(.horizontal)

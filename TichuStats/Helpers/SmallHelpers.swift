@@ -178,9 +178,9 @@ func bombView(bomb: Int) -> some View {
                     .resizable()
                     .scaledToFill()
                     .foregroundStyle(.secondary)
-                    .frame(width: 18, height: 16)
+                    .frame(width: 15, height: 13)
                     .offset(x: 52)
-                Text("\(bomb)").font(.system(size: 15)).offset(x: 41, y: 7).foregroundStyle(Color.secondary)
+                Text("\(bomb)").font(.system(size: 13,weight:.bold)).offset(x: 41, y: 7).foregroundStyle(Color.secondary)
             }
         }
     }
