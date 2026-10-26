@@ -17,8 +17,7 @@
 - TichuStats is **free** and **without ads**.
 - TichuStats does **not store or collect** any private data.
 
-#### **Hint:*
----
+#### **Hint:**
 The Tichu brand and everything around it is owned by [Fata Morgana](https://fatamorgana.ch).
 
 **Hint:** The Help of AI was used on this Project
