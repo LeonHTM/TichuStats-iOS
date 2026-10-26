@@ -5,6 +5,7 @@
 ![](https://tichustats.app/static/content/ipad.iphone.play.won.png)
 
 ### **Features:**
+---
 - **Score Tracker** for your Tichu Games with full customization and editing of past rounds
 - Friends system to quickly add friends to games
 - **Full History** of your games, including all rounds and graphs
@@ -12,10 +13,12 @@
 - Compare your statistics with other players
 
 ### **Cost:**
+---
 - TichuStats is **free** and **without ads**.
 - TichuStats does **not store or collect** any private data.
 
-#### **Hint:**
+#### **Hint:*
+---
 The Tichu brand and everything around it is owned by [Fata Morgana](https://fatamorgana.ch).
 
 **Hint:** The Help of AI was used on this Project
