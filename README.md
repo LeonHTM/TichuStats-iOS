@@ -17,8 +17,9 @@
 - **Score Tracker** for your Tichu Games with full customization and editing of past rounds
 - Friends system to quickly add friends to games
 - **Full History** of your games, including all rounds and graphs
-- **Statistical Analysis** of your performance with Elo Rating and more than 12 different statistics across 5 different timeframes
+- **Statistical Analysis** of your performance with Elo Rating and more than different statistics across time
 - Compare your statistics with other players
+- Home screen and Lock screen widgets to display your favorite games or statistics
 
 ## **Cost:**
 - TichuStats is **free** and **without ads**.
