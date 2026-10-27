@@ -1,3 +1,4 @@
+![](https://tichustats.app/static/tichu/TichuIconV1-iOS-Default-128x128@1x.png)
 # **[TichuStats](https://tichustats.app) iOS App**
 ![](https://img.shields.io/badge/License-GPL-blue)
 ![](https://img.shields.io/badge/Release-1.0_Beta-green)
