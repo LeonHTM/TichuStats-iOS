@@ -140,9 +140,10 @@ struct ProfileView: View {
             Spacer()
         }
         .listRowBackground(Color.clear)
-        .sheet(isPresented: $showImageCropper) {
-            ImageCropView(croppedImage: $croppedImage)
-        }
+        .imageCropPicker(
+            isPresented: $showImageCropper,
+            croppedImage: $croppedImage
+        )
         .onChange(of: croppedImage) {
             if let image = croppedImage{
                 uploadImage(image)

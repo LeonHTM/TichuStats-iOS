@@ -9,25 +9,78 @@ import SwiftUI
 import PhotosUI
 import UIKit
 
+// MARK: - Entry point used in ProfileView
+extension View {
+    func imageCropPicker(
+        isPresented: Binding<Bool>,
+        croppedImage: Binding<UIImage?>
+    ) -> some View {
+        modifier(
+            ImageCropPickerModifier(
+                isPresented: isPresented,
+                croppedImage: croppedImage
+            )
+        )
+    }
+}
 
+private struct PickedPhoto: Identifiable {
+    let id = UUID()
+    let item: PhotosPickerItem
+}
 
-//MARK: - ImageCropView used in ProfileView
+struct ImageCropPickerModifier: ViewModifier {
+    @Binding var isPresented: Bool
+    @Binding var croppedImage: UIImage?
+
+    @State private var pickerItem: PhotosPickerItem?
+    @State private var picked: PickedPhoto?
+
+    func body(content: Content) -> some View {
+        content
+            .photosPicker(
+                isPresented: $isPresented,
+                selection: $pickerItem,
+                matching: .images,
+                photoLibrary: .shared()
+            )
+            .onChange(of: pickerItem) { _, item in
+                guard let item else { return }
+
+                Task { @MainActor in
+                    /*var waited = 0
+                    while isPresented && waited < 40 {
+                        try? await Task.sleep(for: .milliseconds(50))
+                        waited += 1
+                    }
+                    try? await Task.sleep(for: .milliseconds(250))*/
+
+                    picked = PickedPhoto(item: item)
+                    pickerItem = nil
+                }
+            }
+            .sheet(item: $picked) { photo in
+                ImageCropView(
+                    item: photo.item,
+                    croppedImage: $croppedImage
+                )
+            }
+    }
+}
+
+// MARK: - Crop screen
 struct ImageCropView: View {
     @Environment(\.dismiss) private var dismiss
 
+    let item: PhotosPickerItem
     @Binding var croppedImage: UIImage?
-
-    // Photo picker
-    @State private var pickerItem: PhotosPickerItem?
-    @State private var showCrop = false
 
     // Image state
     @State private var source: UIImage?
-    @State private var loadedIdentifier: String?
-    @State private var isLoading = false
+    @State private var isLoading = true
     @State private var loadError: String?
 
-    //Transformation
+    // Transformation
     @State private var zoom: CGFloat = 1
     @State private var offset: CGSize = .zero
 
@@ -43,26 +96,14 @@ struct ImageCropView: View {
 
     var body: some View {
         NavigationStack {
-            pickerScreen
-                .navigationDestination(isPresented: $showCrop) {
-                    cropScreen
-                }
+            cropScreen
         }
         .statusBarHidden()
-        .onChange(of: pickerItem) { _, item in
-            guard let item else { return }
-
-            Task {
-                await load(item)
-            }
-        }
-        .onChange(of: showCrop) { _, isShown in
-            if !isShown {
-                pickerItem = nil
-            }
+        .task {
+            await load(item)
         }
         .alert(
-            String(localized:"crop.unableToLoad"),
+            String(localized: "crop.unableToLoad"),
             isPresented: Binding(
                 get: { loadError != nil },
                 set: { presented in
@@ -72,49 +113,18 @@ struct ImageCropView: View {
                 }
             )
         ) {
-            Button(String(localized:"general.alert.ok"), role: .cancel) {
+            Button(String(localized: "general.alert.ok"), role: .cancel) {
                 loadError = nil
+                dismiss()
             }
         } message: {
             Text(
-                loadError ?? String(localized:"crop.pleaseTryOther")
+                loadError ?? String(localized: "crop.pleaseTryOther")
             )
         }
     }
 
-    // MARK: Picker Screen
-    private var pickerScreen: some View {
-        PhotosPicker(
-            "Photos",
-            selection: $pickerItem,
-            matching: .images,
-            photoLibrary: .shared()
-        )
-        .navigationTitle(String(localized:"crop.pickPhoto"))
-        .toolbar(removing: .title)
-        .padding(.top,-55.5)
-        .photosPickerStyle(.inline)
-        .photosPickerDisabledCapabilities(.selectionActions)
-        .ignoresSafeArea(edges: [.top, .bottom])
-        .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
-        .overlay {
-            if isLoading {
-                ProgressView()
-                    .padding(24)
-                
-            }
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button(role: .cancel) {
-                    dismiss()
-                }
-            }
-        }
-    }
-
-    // MARK: CropScreen used in ImageCropView
+    // MARK: CropScreen
     private var cropScreen: some View {
         GeometryReader { geometry in
             let diameter = max(
@@ -172,6 +182,11 @@ struct ImageCropView: View {
                         )
                         .allowsHitTesting(false)
                 }
+
+                if isLoading {
+                    ProgressView()
+                        .padding(24)
+                }
             }
             .frame(
                 width: geometry.size.width,
@@ -191,6 +206,12 @@ struct ImageCropView: View {
                     }
             )
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .cancel) {
+                        dismiss()
+                    }
+                }
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) {
                         save(diameter: diameter)
@@ -200,7 +221,7 @@ struct ImageCropView: View {
             }
         }
         .ignoresSafeArea()
-        .navigationTitle(String(localized:"crop.moveAndScale"))
+        .navigationTitle(String(localized: "crop.moveAndScale"))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -221,7 +242,6 @@ struct ImageCropView: View {
     private func magnify(diameter: CGFloat) -> some Gesture {
         MagnifyGesture()
             .updating($pinch) { value, state, transaction in
-                // Keep live magnification immediate.
                 transaction.animation = nil
                 state = value.magnification
             }
@@ -322,28 +342,8 @@ struct ImageCropView: View {
     // MARK: Image Loading
     @MainActor
     private func load(_ item: PhotosPickerItem) async {
-        // If is same photo as last time: reuse the decoded image: NO relaoad
-        if let id = item.itemIdentifier,
-           id == loadedIdentifier,
-           source != nil {
-            commitWithoutAnimation {
-                zoom = 1
-                offset = .zero
-            }
-            withAnimation(.default) {
-                showCrop = true
-            }
-            return
-        }
-
         isLoading = true
-        var succeeded = false
-        defer {
-            isLoading = false
-            if !succeeded {
-                pickerItem = nil
-            }
-        }
+        defer { isLoading = false }
 
         do {
             var data = try await item.loadTransferable(
@@ -358,12 +358,12 @@ struct ImageCropView: View {
             }
 
             guard let data else {
-                loadError = String(localized:"crop.selectedPhoto")
+                loadError = String(localized: "crop.selectedPhoto")
                 return
             }
 
             guard let image = UIImage(data: data) else {
-                loadError = String(localized:"crop.notValid")
+                loadError = String(localized: "crop.notValid")
                 return
             }
 
@@ -373,7 +373,7 @@ struct ImageCropView: View {
 
             guard prepared.size.width > 0,
                   prepared.size.height > 0 else {
-                loadError = String(localized:"crop.invalidDimension")
+                loadError = String(localized: "crop.invalidDimension")
                 return
             }
 
@@ -382,16 +382,8 @@ struct ImageCropView: View {
                 zoom = 1
                 offset = .zero
             }
-
-            loadedIdentifier = item.itemIdentifier
-            loadError = nil
-            succeeded = true
-
-            withAnimation(.default) {
-                showCrop = true
-            }
         } catch {
-            loadError = String(localized:"crop.unableToLoadtryAgain")
+            loadError = String(localized: "crop.unableToLoadtryAgain")
         }
     }
 
@@ -442,16 +434,7 @@ struct ImageCropView: View {
             format: format
         )
 
-        let result = renderer.image { context in
-            // Clip the result to a circle.
-            /*let circleRect = CGRect(
-                origin: .zero,
-                size: outputSize
-            )
-
-            context.cgContext.addEllipse(in: circleRect)
-            context.cgContext.clip()*/
-
+        let result = renderer.image { _ in
             let imageRect = CGRect(
                 x: -origin.x * outputScale,
                 y: -origin.y * outputScale,
@@ -537,6 +520,3 @@ private extension UIImage {
         }
     }
 }
-
-
-
