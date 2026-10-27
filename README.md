@@ -1,5 +1,5 @@
 <h1>
-  <img src="https://tichustats.app/static/tichu/TichuIconV1-iOS-Default-128x128@1x.png" width="40" height="40" align="top">
+  <img src="https://tichustats.app/static/tichustats/TichuIconV1-iOS-Default-128x128@1x.png" width="40" height="40" align="top">
   TichuStats iOS App
 </h1>
 
