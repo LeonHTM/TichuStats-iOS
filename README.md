@@ -1,4 +1,4 @@
-https://github.com/LeonHTM/TichuStats-iOS/blob/main/README.md# **[TichuStats](https://tichustats.app) iOS App**
+**[TichuStats](https://tichustats.app) iOS App**
 ![](https://img.shields.io/badge/License-GPL-blue)
 ![](https://img.shields.io/badge/Available-iOS_26+-green)
 ![](https://img.shields.io/github/stars/LeonHTM/TichuStats-iOS?style=social)
