@@ -4,7 +4,7 @@
 </h1>
 
 ![](https://img.shields.io/badge/License-GPL-blue)
-![](https://img.shields.io/badge/Release-1.0_Beta-green)
+![](https://img.shields.io/badge/Release-1.0_Beta-orange)
 ![](https://img.shields.io/badge/Available-iOS_26+-green)
 ![](https://img.shields.io/github/stars/LeonHTM/TichuStats-iOS?style=social)
 
