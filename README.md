@@ -8,7 +8,7 @@
 ![](https://img.shields.io/badge/Available-iOS_26+-green)
 ![](https://img.shields.io/github/stars/LeonHTM/TichuStats-iOS?style=social)
 
-**TichuStats is the ultimate companion app for the popular card game Tichu. TichuStats makes it easy to keep score of your games and analyze your performance. It is made by fans for fans.**
+TichuStats is the ultimate companion app for the popular card game Tichu. TichuStats makes it easy to keep score of your games and analyze your performance. It is made by fans for fans.
 
 
 ![](https://tichustats.app/static/content/ipad.iphone.play.won.png)
