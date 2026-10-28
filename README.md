@@ -13,7 +13,7 @@ TichuStats is the ultimate companion app for the popular card game Tichu. TichuS
 
 ![](https://tichustats.app/static/content/ipad.iphone.play.won.png)
 
-## **Features:**
+## **Features**
 - **Score Tracker** for your Tichu Games with full customization and editing of past rounds
 - Friends system to quickly add friends to games
 - **Full History** of your games, including all rounds and graphs
@@ -21,7 +21,7 @@ TichuStats is the ultimate companion app for the popular card game Tichu. TichuS
 - Compare your statistics with other players
 - Home screen and Lock screen widgets to display your favorite games or statistics
 
-## **Cost:**
+## **Cost**
 - TichuStats is **free** and **without ads**.
 - TichuStats does **not store or collect** any private data.
 
