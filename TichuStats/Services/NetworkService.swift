@@ -204,15 +204,16 @@ class NetworkService: ObservableObject {
 
     // MARK: verifyLoginCode used in LoginView after the user enters the code they received by email
     func verifyLoginCode(mail: String, code: String, name: String) async -> Bool {
-        guard
-            let encodedMail = mail.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
-            let encodedCode = code.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
-            let url = URL(string: "\(apiURL)/login/verify-code/\(encodedMail)/\(encodedCode)")
-        else {
+        guard let url = URL(string: "\(apiURL)/login/verify-code") else {
             return false
         }
 
-        let request = appAuthorizedRequest(url: url, method: "POST")
+        var request = appAuthorizedRequest(url: url, method: "POST")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "email": mail,
+            "code": code
+        ])
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
