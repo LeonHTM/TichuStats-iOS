@@ -562,6 +562,29 @@
         }
       }
     },
+    "crop.unableToLoad" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto konnte nicht geladen werden."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν ήταν δυνατή η φόρτωση της φωτογραφίας."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo could not be loaded. "
+          }
+        }
+      }
+    },
     "crop.unableToLoadtryAgain" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4665,13 +4688,13 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Auf allen Geräten abmelden"
           }
         },
         "el" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Αποσύνδεση από όλες τις συσκευές"
           }
         },
