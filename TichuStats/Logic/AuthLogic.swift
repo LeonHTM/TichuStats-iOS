@@ -151,10 +151,7 @@ final class PasskeyManager: NSObject {
 
         let options = try await fetchJSON(
             path: "/passkey/add/options",
-            body: [
-                "timezone_str": timezone,
-                "language_code": languageCode
-            ],
+            body:[:],
             userToken: userToken
         )
 
@@ -203,6 +200,8 @@ final class PasskeyManager: NSObject {
             body: [
                 "challengeId": challengeId,
                 "credential": credentialJSON,
+                "timezone_str": timezone,
+                "language_code": languageCode
             ],
             userToken: userToken
         )
