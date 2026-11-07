@@ -390,20 +390,21 @@ class NetworkService: ObservableObject {
         }
     }
 
-    //MARK: checkMail used in LoginView to check if mail is available
-    func checkEmail(email: String) async -> Int? {
-        guard let encoded = email.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
-              let url = URL(string: "\(apiURL)/check_email/\(encoded)") else { return nil }
+    //MARK: checkEmail used in LoginView to check if an account with this mail exists
+    func checkEmail(email: String) async -> Bool {
+        guard let url = URL(string: "\(apiURL)/check_email") else { return false }
+
+        var request = appAuthorizedRequest(url: url, method: "POST")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["email": email])
 
         do {
-            let request = appAuthorizedRequest(url: url)
             let (data, _) = try await URLSession.shared.data(for: request)
             let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-            let id = json?["id"] as? Int
-            return id 
+            return json?["exists"] as? Bool ?? false
         } catch {
             print("checkEmail error: \(error)")
-            return nil
+            return false
         }
     }
     

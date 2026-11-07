@@ -24,7 +24,7 @@ struct LoginSheetView: View{
     @Environment(\.colorScheme) var colorScheme
     @FocusState private var isEmailFocused: Bool
     @State private var isChecking:Bool = false
-    @State private var alreadyExistsId: Int?
+    @State private var emailExists: Bool = false
     @State private var showOfflineAlert: Bool = false
     @State private var isPasskeyLoading: Bool = false
     @State private var passkeyErrorMessage: String?
@@ -73,7 +73,7 @@ struct LoginSheetView: View{
                     if network.isOnline{
                         isChecking = true
                         Task {
-                            alreadyExistsId = await network.checkEmail(email: userEmail)
+                            emailExists = await network.checkEmail(email: userEmail)
                             isChecking = false
                         }
                     }
@@ -100,7 +100,7 @@ struct LoginSheetView: View{
                                 //If users does not sign up meaning he signs in
                                 if signIn{
                                     //then the mail has to exist
-                                    if alreadyExistsId == nil{
+                                    if !emailExists {
                                         withAnimation(.easeInOut){
                                             mailNotExists = true
                                         }
