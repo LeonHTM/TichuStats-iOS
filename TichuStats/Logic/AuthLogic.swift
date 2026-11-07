@@ -146,9 +146,15 @@ final class PasskeyManager: NSObject {
     
     // Adds a passkey to an already logged-in account 
     func addPasskey(userToken: String) async throws {
+        let timezone = TimeZone.current.identifier
+        let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
+
         let options = try await fetchJSON(
             path: "/passkey/add/options",
-            body: [:],
+            body: [
+                "timezone_str": timezone,
+                "language_code": languageCode
+            ],
             userToken: userToken
         )
 
