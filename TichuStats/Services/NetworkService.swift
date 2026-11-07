@@ -22,7 +22,20 @@ class NetworkService: ObservableObject {
     @AppStorage("userName") var userName: String = "Unknown"
     @AppStorage("userElo") var userElo: Double = 1000
     @AppStorage("pendingDeviceToken") var pendingDeviceToken: String = ""
-    @AppStorage("authToken") var authToken: String = ""
+    // Stored in the Keychain instead of UserDefaults
+    var authToken: String {
+        get {
+            if let token = KeychainStore.get("authToken") { return token }
+            // One-time migration from the old @AppStorage value
+            if let old = UserDefaults.standard.string(forKey: "authToken"), !old.isEmpty {
+                KeychainStore.set(old, for: "authToken")
+                UserDefaults.standard.removeObject(forKey: "authToken")
+                return old
+            }
+            return ""
+        }
+        set { KeychainStore.set(newValue, for: "authToken") }
+    }
     @AppStorage("isLoading") var isLoading: Bool = false
     @AppStorage("statsList") private var statsList: [Int] = []
     @AppStorage("favDic") var favDic: [Int:Int] = [:]
@@ -136,6 +149,7 @@ class NetworkService: ObservableObject {
             self.authToken = token
             self.userId = userId
             self.isLoading = true
+            SocketService.shared.refreshAuth()
         }
 
         await registerDevice(profileId: userId, deviceToken: pendingDeviceToken)
@@ -328,6 +342,22 @@ class NetworkService: ObservableObject {
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         try? await UNUserNotificationCenter.current().setBadgeCount(0)
+        await MainActor.run {
+            SocketService.shared.refreshAuth()
+        }
+    }
+    
+    //MARK: logoutAllDevices used in ProfileView: invalidates every token of this account on the server
+    func logoutAllDevices(profileId: Int) async {
+        guard let url = URL(string: "\(apiURL)/logout_all/\(profileId)") else { return }
+        let request = authorizedRequest(url: url, method: "POST")
+        do {
+            _ = try await URLSession.shared.data(for: request)
+        } catch {
+            print("logoutAllDevices error: \(error)")
+        }
+        // Server already removed all push tokens -> only clear local data here
+        await logout(profileId: profileId, local: true)
     }
     
     //MARK: addProfile used in verifyLoginCode on login when creating Profile
@@ -453,7 +483,12 @@ class NetworkService: ObservableObject {
     func fetchProfiles() async -> Bool {
         guard let url = URL(string: "\(apiURL)/profilessimple") else { return false }
         do {
-            let (data, _) = try await URLSession.shared.data(for: authorizedRequest(url: url))
+            let (data, response) = try await URLSession.shared.data(for: authorizedRequest(url: url))
+            if (response as? HTTPURLResponse)?.statusCode == 401, !authToken.isEmpty, userId != -69420 {
+                // Token revoked (logged out on all devices or account deleted) -> back to login
+                await logout(profileId: userId, local: true)
+                return false
+            }
             let decoded = try await Task.detached(priority: .userInitiated) { [decoder = self.flexibleDateDecoder] in
                 try decoder.decode([Profile].self, from: data)
             }.value

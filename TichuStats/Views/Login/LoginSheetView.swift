@@ -55,6 +55,7 @@ struct LoginSheetView: View{
 
             TextField("\(String(localized:"general.mailPlaceholder"))", text: $userEmail)
                 /*.foregroundStyle(!mailLegit || mailNotExists ? Color.red : .primary)*/
+                .textContentType(.emailAddress)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
                 .keyboardType(.emailAddress)

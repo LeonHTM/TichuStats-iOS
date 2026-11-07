@@ -4660,6 +4660,29 @@
         }
       }
     },
+    "profile.section.auth.logOutAll" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Auf allen Geräten abmelden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Αποσύνδεση από όλες τις συσκευές"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log Out on All Devices"
+          }
+        }
+      }
+    },
     "profile.section.deleteAccount.alert.confirm" : {
       "extractionState" : "manual",
       "localizations" : {

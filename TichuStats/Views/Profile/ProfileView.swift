@@ -401,6 +401,29 @@ struct ProfileView: View {
     // MARK: - Delete Account Section
     private var deleteAccountSection: some View {
         Section {
+            /*//MARK: Log Out on All Devices
+            Button {
+                withAnimation(.easeInOut(duration: 0.285)) {
+                    if network.isOnline {
+                        Task {
+                            await network.logoutAllDevices(profileId: userId)
+                        }
+                    } else {
+                        showOfflineAlert = true
+                    }
+                }
+            } label: {
+                HStack {
+                    Label(String(localized: "profile.section.auth.logOutAll"), systemImage: "rectangle.portrait.and.arrow.right.fill")
+                        .labelStyle(ColorfulIconLabelStyle(color: .accentColor, fontSize: 13))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.tertiary)
+                        .padding(.trailing, 1.2)
+                }
+                .foregroundColor(network.isOnline ? .primary : .secondary)
+            }*/
             Button {
                 withAnimation(.easeInOut(duration: 0.285)) {
                     if network.isOnline {

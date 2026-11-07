@@ -45,7 +45,7 @@ final class SocketService: ObservableObject {
 
         socket = manager.defaultSocket
         setupHandlers()
-        socket.connect()
+        connectWithAuth()
     }
 
     // MARK: Reconnect with new URL
@@ -68,10 +68,20 @@ final class SocketService: ObservableObject {
         case .connected, .connecting:
             return false
         default:
-            socket.connect()
+            connectWithAuth()
             return true
         }
     }
+    private func connectWithAuth() {
+            let token = NetworkService.shared.authToken
+            socket.connect(withPayload: token.isEmpty ? nil : ["token": token])
+        }
+    func refreshAuth() {
+            socket.disconnect()
+            socket.removeAllHandlers()
+            manager.disconnect()
+            setupSocket()
+        }
     
     private func setupHandlers() {
         socket.on(clientEvent: .connect) { [weak self] data, ack in
