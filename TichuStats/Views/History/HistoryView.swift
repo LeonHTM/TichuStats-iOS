@@ -632,9 +632,7 @@ struct GameRow: View, Equatable {
         } preview: {
             // No ImageRenderer work here any more; the preview just shows the summary.
             Group{
-                if isLoadingRound.wrappedValue == true {
-                    ProgressView()
-                }else{
+              
                     GameSummaryListView(
                         showGameSummarySheetView: .constant(true),
                         currentGameId: game.id,
@@ -642,7 +640,7 @@ struct GameRow: View, Equatable {
                         network: network,
                         allowEditing: .constant(false),
                         winnerName: "Unknown")
-                }
+                
             }
             .task {
                 if network.roundsByGame[game.id] == nil {

@@ -247,8 +247,13 @@ class NetworkService: ObservableObject {
             } else {
                 print("User does not exist, creating profile")
 
+                guard let signupToken = json["signup_token"] as? String else {
+                    print("New user response missing signup_token")
+                    return false
+                }
+
                 let newId = await self.addProfile(
-                    email: mail,
+                    signupToken: signupToken,
                     name: name
                 )
 
@@ -324,14 +329,14 @@ class NetworkService: ObservableObject {
         try? await UNUserNotificationCenter.current().setBadgeCount(0)
     }
     
-    //MARK: addProfile used in EditNameSheetView on login when creating Profile
-    func addProfile(email: String, name: String) async -> Int? {
+    //MARK: addProfile used in verifyLoginCode on login when creating Profile
+    func addProfile(signupToken: String, name: String) async -> Int? {
         guard let url = URL(string: "\(apiURL)/add_profile") else { return nil }
 
         var request = appAuthorizedRequest(url: url, method: "POST")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: [
-            "email": email,
+            "signup_token": signupToken,
             "name": name
         ])
 

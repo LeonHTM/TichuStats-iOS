@@ -213,6 +213,70 @@ struct ProfileView: View {
     // MARK: - Support Section
     private var supportSection: some View {
         Section {
+            
+            Button{
+                Task {
+                    isAddingPasskey = true
+                    defer { isAddingPasskey = false }
+                    do {
+                        try await network.addPasskeyToAccount()
+                    } catch PasskeyError.cancelled {
+                        // backed out of Face ID sheet — no-op
+                    } catch PasskeyError.server(let code) {
+                        addPasskeyErrorMessage = code == "challenge_expired"
+                        ? String(localized:"passKeyError.expired")
+                        : String(localized:"passKeyError.notAdd")
+                        showAddPasskeyError = true
+                    } catch {
+                        addPasskeyErrorMessage = String(localized:"passKeyError.expired")
+                        showAddPasskeyError = true
+                    }
+                }
+            }label:{
+                HStack {
+                    
+                    Label(String(localized:"profile.section.support.passKey"), systemImage:"person.badge.key.fill")
+                        .labelStyle(ColorfulIconLabelStyle(color: .green, fontSize: 13))
+                    Spacer()
+                    if isAddingPasskey {
+                        ProgressView()
+                    }
+                    
+                }
+            }
+            .disabled(!network.isOnline || isAddingPasskey)
+            .foregroundStyle(Color.primary)
+            .alert(String(localized:"passKeyError.general"), isPresented: $showAddPasskeyError, presenting: addPasskeyErrorMessage) { _ in
+                Button(String(localized:"general.alert.ok"), role: .cancel) {}
+            } message: { message in
+                Text(message)
+            }
+            
+            //MARK: Export Data
+            NavigationLink{
+                ExportDataView(exportProfile:$exportProfile,exportSettings:$exportSettings,exportFriends: $exportFriends,exportGames: $exportGames,exportEloHistory: $exportEloHistory,exportStatsHistory: $exportStatsHistory,fullStatsHistory: $fullStatsHistory)
+            }label: {
+                HStack {
+                    Label(String(localized:"export.title.data"), systemImage: "arrow.down.circle.fill")
+                        .labelStyle(ColorfulIconLabelStyle(color: .gray, fontSize: 13))
+                }
+            }
+            Button {
+                if let url = URL(string: "https://fatamorgana.ch/fatamorgana/tichu") {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                Label {
+                    Text(String(localized: "profile.section.support.buyTichu"))
+                } icon: {
+                    Image("drachi")
+                        .resizable()
+                        .renderingMode(.template)
+                        .scaledToFit()
+                }
+                .labelStyle(ColorfulIconLabelStyle(color: .black, fontSize: 13))
+            }
+            .foregroundColor(.primary)
             //MARK: Privacy
             
             Button {
@@ -286,7 +350,7 @@ struct ProfileView: View {
             }.foregroundColor(.primary)
 
             Button {
-                if let url = URL(string: "https://github.com/LeonHTM/Tichu") {
+                if let url = URL(string: "https://github.com/LeonHTM/TichuStats-iOS") {
                     UIApplication.shared.open(url)
                 }
             } label: {
@@ -294,55 +358,15 @@ struct ProfileView: View {
                     .labelStyle(ColorfulIconLabelStyle(color: .black, fontSize: 17))
             }
             .foregroundColor(.primary)
-            Button{
-                Task {
-                    isAddingPasskey = true
-                    defer { isAddingPasskey = false }
-                    do {
-                        try await network.addPasskeyToAccount()
-                    } catch PasskeyError.cancelled {
-                        // backed out of Face ID sheet — no-op
-                    } catch PasskeyError.server(let code) {
-                        addPasskeyErrorMessage = code == "challenge_expired"
-                        ? String(localized:"passKeyError.expired")
-                        : String(localized:"passKeyError.notAdd")
-                        showAddPasskeyError = true
-                    } catch {
-                        addPasskeyErrorMessage = String(localized:"passKeyError.expired")
-                        showAddPasskeyError = true
-                    }
-                }
-            }label:{
-                HStack {
-                    
-                    Label(String(localized:"profile.section.support.passKey"), systemImage:"person.badge.key.fill")
-                            .labelStyle(ColorfulIconLabelStyle(color: .green, fontSize: 13))
-                    Spacer()
-                    if isAddingPasskey {
-                        ProgressView()
-                    }
-                    
-                }
-            }
-            .disabled(!network.isOnline || isAddingPasskey)
-            .foregroundStyle(Color.primary)
-            .alert(String(localized:"passKeyError.general"), isPresented: $showAddPasskeyError, presenting: addPasskeyErrorMessage) { _ in
-                Button(String(localized:"general.alert.ok"), role: .cancel) {}
-            } message: { message in
-                Text(message)
-            }
             
-            //MARK: Export Data
-            NavigationLink{
-                ExportDataView(exportProfile:$exportProfile,exportSettings:$exportSettings,exportFriends: $exportFriends,exportGames: $exportGames,exportEloHistory: $exportEloHistory,exportStatsHistory: $exportStatsHistory,fullStatsHistory: $fullStatsHistory)
-                }label: {
-                HStack {
-                    Label(String(localized:"export.title.data"), systemImage: "arrow.down.circle.fill")
-                        .labelStyle(ColorfulIconLabelStyle(color: .gray, fontSize: 13))
-                }
-            }
+            
+           
         }
     }
+    
+
+        
+    
 
     // MARK: - Auth Section
     private var authSection: some View {

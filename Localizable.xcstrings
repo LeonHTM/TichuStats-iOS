@@ -4752,6 +4752,29 @@
         }
       }
     },
+    "profile.section.support.buyTichu" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tichu-Karten kaufen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αγορά παιχνιδιού Tichu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buy Tichu Cards"
+          }
+        }
+      }
+    },
     "profile.section.support.contact" : {
       "extractionState" : "manual",
       "localizations" : {
