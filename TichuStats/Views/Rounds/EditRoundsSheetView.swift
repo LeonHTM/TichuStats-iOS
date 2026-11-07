@@ -84,7 +84,7 @@ struct EditRoundsSheetView: View {
                     Task{
                         tie = true
                         showEditRoundsSheet = false
-                        //await network.reCalculate(gameId: currentGameId, tie: tie)
+                        await network.reCalculate(gameId: currentGameId, tie: tie)
                     }
                     
                 }

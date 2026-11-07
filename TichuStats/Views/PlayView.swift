@@ -77,7 +77,7 @@ struct PlayView: View {
     private var gameDone: Bool {
         
         guard let game = currentGame else { return false }
-        if tie{ return true }
+        if tie || game.winner == 3 { return true }
         if game.currentPointsTeam1 >= game.target && game.currentPointsTeam1 > game.currentPointsTeam2 { return true }
         if game.currentPointsTeam2 >= game.target && game.currentPointsTeam2 > game.currentPointsTeam1 { return true }
         return false
@@ -153,14 +153,16 @@ struct PlayView: View {
                     await network.fetch(load:false)
                 }
                 .onChange(of:gameDone){
-                    
-                    network.finishGameEditing = true
-                    
-                }
+                                    // Editable only while nobody has finished the game yet
+                                    network.finishGameEditing = !(currentGame?.calculated ?? false)
+                                }
                 .onChange(of: network.games) {
                     let openGames = network.games.filter { $0.winner == nil }
                     if openGames.count == 1 {
                         withAnimation(.easeInOut) {
+                            showAddPlayersSheet2 = false
+                            showAddPlayersSheet3 = false
+                            showAddPlayersSheet4 = false
                             network.currentGameId = openGames.first?.id
                             player1Id = openGames.first?.team1Player1Id
                             player2Id = openGames.first?.team1Player2Id
@@ -231,8 +233,15 @@ struct PlayView: View {
                 }
                 .onChange(of: gameDone) {
                     if gameDone {
-                        showGameOverSheet = true
-                    }else if gameDone == false{
+
+                        showAddRoundSheet = false
+                        showEditRoundsSheet = false
+                        
+                            if gameDone {
+                                showGameOverSheet = true
+                            }
+                        
+                    } else {
                         showGameOverSheet = false
                     }
                 }

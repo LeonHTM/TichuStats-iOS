@@ -378,20 +378,18 @@ final class SocketService: ObservableObject {
         }
         
         //MARK: GAME finished
+        //MARK: GAME finished
         socket.on("game_finished") { data, _ in
-            //guard let gameId = (data.first as? [String: Any])?["game_id"] as? Int else { return }
-            Task {
-                /*if gameId == NetworkService.shared.currentGameId{
+            let gameId = (data.first as? [String: Any])?["game_id"] as? Int
+            Task { @MainActor in
+                // Someone finished the game -> it is final, lock the open game-over sheet
+                if let gameId, gameId == NetworkService.shared.currentGameId {
                     NetworkService.shared.finishGameEditing = false
-                    Task{
-                        await NetworkService.shared.fetchSelectedProfilesStats()
-                    }
-                    print("RECIEVED GAME FINISHED CALL ")
-                }*/
-                Task{
-                    //THis should fetch anyway, stats of other people could have changed
-                    await NetworkService.shared.fetchSelectedProfilesStats()
                 }
+            }
+            Task {
+                // Stats of other people could have changed
+                await NetworkService.shared.fetchSelectedProfilesStats()
             }
         }
         

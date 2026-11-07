@@ -77,7 +77,8 @@ struct GameSummarySheetView: View {
             .toolbar {
                 bottomToolbar
                 toolbarContent
-            }.onChange(of: currentGame){
+            }.onChange(of: currentGame?.id) {
+              
                 showGameOverViewSheetView = false
             }
             .navigationTitle(tie || currentGame?.winner == 3 ?
