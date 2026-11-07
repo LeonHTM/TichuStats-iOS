@@ -22,8 +22,7 @@ struct RowSnappingBehavior: ScrollTargetBehavior {
 
 // MARK: - Lazy share image
 
-/// Renders the share image only when the user actually shares, instead of
-/// every time the context-menu preview appears.
+//Renders the share image only when the user actually shares
 struct GameShareImage: Transferable {
     let makePNG: @MainActor () async -> Data?
 
@@ -47,8 +46,6 @@ struct HistoryView: View {
     // MARK: - Storage
     @AppStorage("userId") var userId: Int = -69420
     @AppStorage("selectedTab") private var selectedTab = 1
-    // NOTE: kept as AppStorage because other views may write it. If only this
-    // flow uses it, move it to @State / the view model (avoids UserDefaults I/O).
     @AppStorage("isLoading") private var isLoading = false
     @Environment(\.colorScheme) var colorScheme
 
@@ -108,7 +105,7 @@ struct HistoryView: View {
              currentPointsTeam1: 0, currentPointsTeam2: 0)
     }
 
-    /// Built once instead of on every body evaluation while loading.
+    //Built once instead of on every body evaluation while loading.
     private static let skeletonGames: [Game] = (1...10).map { placeholderGame(id: $0) }
 
     // MARK: - Derived
@@ -137,13 +134,12 @@ struct HistoryView: View {
         hasFavorites = source.contains { $0.winner != nil && $0.favorite }
         gameDateById = Dictionary(source.map { ($0.id, $0.date) }, uniquingKeysWith: { first, _ in first })
 
-        // Keep selection valid (replaces the old `.onChange(of: gameHistory.map(\.id))`).
         if selectedGameId == nil || !history.contains(where: { $0.id == selectedGameId }) {
             select(history.first?.id)
         }
     }
 
-    /// Rounds are fetched only when a game is actually opened (sheet or context-menu preview/share).
+    //Rounds are fetched only when a game is actually opened
     private func ensureRounds(for gameId: Int) {
         guard network.roundsByGame[gameId] == nil else { return }
         Task { await network.fetchGameRounds(gameId: gameId, isLoading: $isLoadingRound) }
@@ -163,7 +159,6 @@ struct HistoryView: View {
                 emptyStateView
             }
         }
-        // One debug sheet for both states.
         .sheet(isPresented: $showDebugSheetView) {
             DebugSheetView(
                 currentGame: .constant(network.games.first ?? Self.placeholderGame(id: 0)),
@@ -186,8 +181,6 @@ struct HistoryView: View {
     // MARK: - History View
     private var historyView: some View {
         NavigationStack {
-            // GlassEffectContainer removed from around the scroll view; the chart card
-            // and the bottom bar have their own glass, so no full-screen blending is needed.
             GeometryReader { outerGeo in
                 ScrollView(.vertical) {
                     LazyVStack(spacing: 0) {

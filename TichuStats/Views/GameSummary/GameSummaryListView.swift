@@ -21,6 +21,8 @@ struct GameSummaryListView: View {
     @State private var showAddRoundSheet: Bool = false
     @State private var showList: Bool = false
     @State private var editingRoundIndex: Int = 0
+    
+    @State private var fetchFailed: Bool = false
 
     @Environment(\.colorScheme) var colorScheme
     @Binding var allowEditing: Bool
@@ -40,6 +42,10 @@ struct GameSummaryListView: View {
 
     private var winRounds: [Round] {
         allRounds.filter { $0.boolWinRound }
+    }
+    
+    private var roundsLoaded: Bool {
+        network.roundsByGame[currentGameId ?? 0] != nil
     }
 
     private func profile(for id: Int?) -> Profile? {
@@ -63,6 +69,16 @@ struct GameSummaryListView: View {
             if currentGame?.currentPointsTeam2 ?? 0 > currentGame?.currentPointsTeam1 ?? 0 { return true }
         }
         return false
+    }
+
+    // MARK: - Loading
+
+    private func loadRounds() {
+        Task {
+            fetchFailed = false
+            await network.fetchGameRounds(gameId: currentGameId ?? 0)
+            fetchFailed = network.roundsByGame[currentGameId ?? 0] == nil
+        }
     }
 
     // MARK: - Helpers
@@ -177,22 +193,49 @@ struct GameSummaryListView: View {
             }
         }
     }
+    
+    // MARK: - Empty / Loading / Error
+
+    @ViewBuilder
+    private var emptyOrLoadingView: some View {
+        if roundsLoaded {
+            // Fetched successfully, the game simply has no rounds.
+            ContentUnavailableView(
+                String(localized: "rounds.noPlayed"),
+                systemImage: "list.bullet"
+            )
+        } else if fetchFailed {
+            ContentUnavailableView {
+                Label(String(localized: "rounds.error.title"), systemImage: "wifi.exclamationmark")
+            } actions: {
+                Button(String(localized: "general.alert.retry")) {
+                    loadRounds()
+                } .padding(13)
+                    .glassEffect(.regular.tint(.accentColor).interactive())
+                    .foregroundStyle(.primary)
+                    .padding(.top,10)
+            }
+        } else {
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                Spacer()
+            }
+        }
+    }
 
     // MARK: - Body
 
     var body: some View {
         NavigationStack {
-            if allRounds.isEmpty{
-                VStack{
-                    Spacer()
-                    HStack{
-                        Spacer()
-                        ProgressView{}
-                        Spacer()
-                    }
-                    Spacer()
-                }.transition(.opacity)
-            }else{
+            if allRounds.isEmpty {
+                emptyOrLoadingView
+                    .transition(.opacity)
+            } else {
                 if !showList {
                     List {
                         let cumulative = allRounds.enumerated().map { (index, round) -> (index: Int, round: Round, cum1: Int, cum2: Int) in
@@ -311,6 +354,7 @@ struct GameSummaryListView: View {
                                     Spacer()
                                     Text(String(format: String(localized: "gameSummary.playedOn"),
                                                 "\(currentGame?.date.formatted(date: .complete, time: .omitted) ?? String(localized: "general.unknown"))"))
+                                    Text("\n")
                                     Spacer()
                                 }
                                 .foregroundStyle(Color.secondary)
@@ -372,10 +416,7 @@ struct GameSummaryListView: View {
                 } else {
                     Text(" ")
                 }
-                
-                
             }
-            
         }
         .onChange(of: allowEditing) {
             if allowEditing == false {
@@ -384,9 +425,7 @@ struct GameSummaryListView: View {
         }
         .onAppear {
             if network.roundsByGame[currentGameId ?? 0] == nil {
-                Task {
-                    await network.fetchGameRounds(gameId: currentGameId ?? 0)
-                }
+                loadRounds()
             }
         }
         .alert(String(localized: "gameSummary.alert.delete.title"), isPresented: $showDeleteGameAlert) {
@@ -419,7 +458,7 @@ struct GameSummaryListView: View {
                 let isDoubleWin = firstId != nil && secondId != nil &&
                     teamIds.contains(firstId) && teamIds.contains(secondId)
                 let placeColor: Color = isDoubleWin
-                    ? .green.opacity(colorScheme == .dark ? 0.66 : 1)
+                    ? .green//.opacity(colorScheme == .dark ? 0.66 : 1)
                     : .primary
 
                 let tichu    = round.announcedTichu.contains(player.id)
@@ -448,7 +487,7 @@ struct GameSummaryListView: View {
                             Text(bigTichu ? "Big Tichu" : pingu ? "Pingu" : "Tichu")
                         }
                         .foregroundStyle(isFirst ? .green : .red)
-                        .opacity(colorScheme == .dark ? 0.66 : 1)
+                        //.opacity(colorScheme == .dark ? 0.66 : 1)
                         .offset(x: bomb > 0 ? 40 : 0)
                     }
 

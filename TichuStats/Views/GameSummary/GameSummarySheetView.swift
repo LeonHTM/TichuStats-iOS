@@ -41,6 +41,9 @@ struct GameSummarySheetView: View {
         network.games.first(where: { $0.id == currentGameId })
     }
 
+    private var currentPointsTeam1: Int { currentGame?.currentPointsTeam1 ?? 0 }
+    private var currentPointsTeam2: Int { currentGame?.currentPointsTeam2 ?? 0 }
+
     private var winnerName: String {
         guard let winnerId = currentGame?.winner else {if tie {return String(localized:"general.tie")} else {return String(localized: "general.unknown") }}
         
@@ -91,6 +94,29 @@ struct GameSummarySheetView: View {
         }
     }
 
+    // MARK: - Score Header
+    private var scoreHeader: some View {
+        VStack {
+            Picker(String(localized: "gamesummary.picker.view"), selection: $selectedTab) {
+                Text(String(localized: "gamesummary.tab.graph")).tag(0)
+                Text(String(localized: "gamesummary.tab.list")).tag(1)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+
+            HStack {
+                Text(String(format: String(localized: "general.team.result"), String(1), String(currentPointsTeam1)))
+                    .foregroundStyle(Color.accentColor)
+                Spacer()
+                Text(String(format: String(localized: "general.team.result"), String(2), String(currentPointsTeam2)))
+            }
+            .fontWeight(.bold)
+            .font(.title2)
+            .padding(.horizontal, 30)
+            .padding(.top, 5)
+        }
+    }
+
     // MARK: - Game Content
     private var gameContent: some View {
         Group {
@@ -101,6 +127,7 @@ struct GameSummarySheetView: View {
                       
                             GameSummaryChartView(currentGameId: currentGameId)
                                 .frame(width: 350)
+                                .padding(.top, 25)
                             Spacer()
                         
                     }
@@ -118,6 +145,7 @@ struct GameSummarySheetView: View {
                             winnerName: winnerName
                         )
                         .padding(.bottom, -50)
+                        .padding(.top, -25)
                     
                 }.animation(.easeInOut,value:isLoading)
             default:
@@ -140,15 +168,7 @@ struct GameSummarySheetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .top) {
-            Picker(String(localized: "gamesummary.picker.view"), selection: $selectedTab) {
-                Text(String(localized: "gamesummary.tab.graph")).tag(0)
-                Text(String(localized: "gamesummary.tab.list")).tag(1)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.top, 8)
-        }
+        .safeAreaInset(edge: .top) { scoreHeader }
     }
 
     // MARK: - Bottom Toolbar
@@ -214,25 +234,10 @@ struct GameSummaryBottomToolbar: ToolbarContent {
             }
         }
 
-        ToolbarItem(placement: .bottomBar) {
-            Spacer()
-        }
-
-        ToolbarItem(placement: .bottomBar) {
-            Button {} label: {
-                HStack {
-                    Text("\(currentGame?.currentPointsTeam1 ?? 0)")
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.accentColor)
-                    Text(":").fontWeight(.bold).font(.title3)
-                    Text("\(currentGame?.currentPointsTeam2 ?? 0)")
-                        .fontWeight(.bold)
-                }
-            }
-        }
+        // Pushes the trash / favorite button to the trailing edge
+        ToolbarSpacer(placement: .bottomBar)
 
         if allowEditing {
-            ToolbarSpacer(placement:.bottomBar)
             ToolbarItem(placement: .bottomBar) {
                 Button {
                     showDeleteGameAlert = true
@@ -246,12 +251,11 @@ struct GameSummaryBottomToolbar: ToolbarContent {
                     Text(String(localized: "gamesummary.delete.alert.message"))
                 }
             }//.matchedTransitionSource(id: "69420", in: ShareSheetSpace)
-        }else{
-            ToolbarSpacer(placement:.bottomBar)
+        } else {
             ToolbarItem(placement: .bottomBar) {
                 Button{
                     Task{
-                        await network.updateGameFavorite(gameId: currentGameId ?? 0, favorite: !currentGame!.favorite )
+                        await network.updateGameFavorite(gameId: currentGameId ?? 0, favorite: !(currentGame?.favorite ?? false))
                     }
                 }label:{
                     Image(systemName: currentGame?.favorite ?? false ? "star.slash.fill" :"star.fill")

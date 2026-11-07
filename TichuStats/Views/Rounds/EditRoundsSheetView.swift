@@ -210,12 +210,10 @@ struct EditRoundsListView: View {
                         winnerName: "Unknown"
                     )
                 } else {
-                    VStack{
-                        Spacer()
-                        Text(String(localized:"rounds.noPlayed"))
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                    }
+                    ContentUnavailableView(
+                        String(localized: "rounds.noPlayedYet"),
+                        systemImage: "list.bullet"
+                    )
                        
                 }
             

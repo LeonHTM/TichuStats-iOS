@@ -4,6 +4,9 @@
     "" : {
       "shouldTranslate" : false
     },
+    "\n" : {
+      "shouldTranslate" : false
+    },
     " " : {
       "shouldTranslate" : false
     },
@@ -5035,7 +5038,53 @@
         }
       }
     },
+    "rounds.error.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Runden konnten nicht geladen werden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν φορτώθηκαν οι γύροι"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rounds could not be loaded"
+          }
+        }
+      }
+    },
     "rounds.noPlayed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Runden gespielt"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν έχουν παιχτεί γύροι"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No rounds played"
+          }
+        }
+      }
+    },
+    "rounds.noPlayedYet" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
@@ -5047,13 +5096,13 @@
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Δεν έχουν παιχτεί γύροι ακόμη."
+            "value" : "Δεν έχουν παιχτεί γύροι ακόμη"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No Rounds played yet."
+            "value" : "No Rounds played yet"
           }
         }
       }
@@ -6491,7 +6540,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Heute"
+            "value" : "Tag"
           }
         },
         "el" : {

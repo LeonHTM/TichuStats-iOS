@@ -143,6 +143,8 @@ struct StatsContainer: View {
                 HStack {
                     Text(title)
                         .font(.system(size: 20))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.50)
                         .fontWeight(.bold)
                         .redactedShimmer()
                     Spacer()

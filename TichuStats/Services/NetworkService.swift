@@ -1322,11 +1322,13 @@ class NetworkService: ObservableObject {
     }
     
     //MARK: fetchGameRounds used in SocketService, GameSummaryListview, EditRoundsSheetView, HistoryView and PlayView
-    func fetchGameRounds(gameId: Int,isLoading: Binding<Bool> = .constant(true)) async {
+    func fetchGameRounds(gameId: Int, isLoading: Binding<Bool> = .constant(true)) async {
         guard let url = URL(string: "\(apiURL)/game/\(gameId)/rounds") else { return }
 
+        isLoading.wrappedValue = true
+        defer { isLoading.wrappedValue = false }
+
         do {
-            isLoading.wrappedValue = true
             let (data, _) = try await URLSession.shared.data(for: authorizedRequest(url: url))
 
             nonisolated struct Response: Decodable {
@@ -1339,7 +1341,7 @@ class NetworkService: ObservableObject {
             }.value
 
             await MainActor.run {
-                self.roundsByGame[gameId] = decoded.rounds
+                self.roundsByGame[gameId] = decoded.rounds   // [] is stored too
 
                 let defaults = UserDefaults(suiteName: "group.com.drakynem.tichu")
                 if let existing = defaults?.data(forKey: "widgetGames"),
@@ -1358,12 +1360,10 @@ class NetworkService: ObservableObject {
                         defaults?.set(encoded, forKey: "widgetGames")
                         WidgetCenter.shared.reloadTimelines(ofKind: "favGameWidget")
                     }
-                    isLoading.wrappedValue = false
                 }
             }
         } catch {
             print("fetchGameRounds error: \(error)")
-            isLoading.wrappedValue = false
         }
     }
     
