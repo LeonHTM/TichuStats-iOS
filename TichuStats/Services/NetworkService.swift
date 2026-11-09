@@ -498,16 +498,21 @@ class NetworkService: ObservableObject {
                     self.profiles.removeAll { fetchedById[$0.id] == nil }
                     for newProfile in decoded {
                         if let index = self.profiles.firstIndex(where: { $0.id == newProfile.id }) {
-                            self.profiles[index].createdAt = newProfile.createdAt
-                            self.profiles[index].name = newProfile.name
-                            self.profiles[index].profileImageUrl = newProfile.profileImageUrl
-                            self.profiles[index].elo = newProfile.elo
-                            if newProfile.id == userId {
-                                self.userName = newProfile.name ?? "Unknown"
-                                self.userElo = newProfile.elo ?? 1000
-                            }
+                            // Take the new profile but keep the locally loaded stats
+                            var updated = newProfile
+                            let old = self.profiles[index]
+                            updated.allTime = old.allTime
+                            updated.year = old.year
+                            updated.month = old.month
+                            updated.week = old.week
+                            updated.day = old.day
+                            self.profiles[index] = updated
                         } else {
                             self.profiles.append(newProfile)
+                        }
+                        if newProfile.id == self.userId {
+                            self.userName = newProfile.name ?? "Unknown"
+                            self.userElo = newProfile.elo ?? 1000
                         }
                     }
                 }
@@ -694,18 +699,56 @@ class NetworkService: ObservableObject {
         }
     }
     
-    //MARK: isAdmin used in PlayView, StatsView, HistoryView and SocketService admin_update
-    func isAdmin(profileId: Int) async -> Bool {
-        guard let url = URL(string: "\(apiURL)/profile/\(profileId)/is_admin") else { return false }
+    //MARK: fetchProfile fetches a single profile used in fetchProfilesStuff
+    @discardableResult
+    func fetchOwnProfile() async -> Profile? {
+        let currentUserId = userId
+        guard currentUserId != -69420, !authToken.isEmpty,
+              let url = URL(string: "\(apiURL)/profile/\(currentUserId)") else { return nil }
         do {
-            let (data, _) = try await URLSession.shared.data(for: authorizedRequest(url: url))
-            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-            return json?["is_admin"] as? Bool ?? false
+            let (data, response) = try await URLSession.shared.data(for: authorizedRequest(url: url))
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+            if status == 401 {
+                // Token revoked -> back to login
+                await logout(profileId: currentUserId, local: true)
+                return nil
+            }
+            guard status == 200 else {
+                print("fetchOwnProfile failed (\(status)): \(String(data: data, encoding: .utf8) ?? "")")
+                return nil
+            }
+
+            let profile = try await Task.detached(priority: .userInitiated) { [decoder = self.flexibleDateDecoder] in
+                try decoder.decode(Profile.self, from: data)
+            }.value
+
+            await MainActor.run {
+                withAnimation(.easeInOut) {
+                    if let index = self.profiles.firstIndex(where: { $0.id == currentUserId }) {
+                        // Take the new profile but keep the locally loaded stats
+                        var updated = profile
+                        let old = self.profiles[index]
+                        updated.allTime = old.allTime
+                        updated.year = old.year
+                        updated.month = old.month
+                        updated.week = old.week
+                        updated.day = old.day
+                        self.profiles[index] = updated
+                    } else {
+                        self.profiles.append(profile)
+                    }
+                }
+                self.userName = profile.name ?? "Unknown"
+                self.userElo = profile.elo ?? 1000
+            }
+            return profile
         } catch {
-            print("isAdmin error: \(error)")
-            return false
+            print("fetchOwnProfile error: \(error)")
+            return nil
         }
     }
+ 
     
     //MARK: deleteProfile used in ProfileView
     func deleteProfile(profileId: Int) async {
@@ -1051,6 +1094,19 @@ class NetworkService: ObservableObject {
         }
 
         isLoading = false
+    }
+    
+    
+    //MARK: - Profile Fetch Funciton used in ProfileView as refrehs
+    func fetchProfileStuff() async {
+        let currentUserId = self.userId
+            await withTaskGroup(of: Void.self) { group in
+            group.addTask{await self.fetchOwnProfile()}
+            group.addTask { await self.fetchFriends(profileId: currentUserId) }
+            group.addTask { await self.fetchFriendRequests(profileId: currentUserId) }
+            group.addTask { await self.fetchProfileSettings(profileId: currentUserId) }
+        }
+
     }
     
     //MARK: - Games and Rounds Section

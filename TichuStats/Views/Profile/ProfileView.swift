@@ -78,6 +78,11 @@ struct ProfileView: View {
             }.alert(isPresented:$showOfflineAlert){
                 OfflineView.offlineAlert()
             }
+            .refreshable {
+                Task{
+                    await network.fetchProfileStuff()
+                }
+            }
             .scrollEdgeEffectStyle(.soft, for: .all)
             .animation(.easeInOut, value: network.isOnline)
             .padding(.top, -10)
