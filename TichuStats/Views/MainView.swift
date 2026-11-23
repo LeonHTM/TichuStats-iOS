@@ -169,6 +169,9 @@ struct MainView: View {
                 NotificationCenter.default.post(name: .openFriendsSheet, object: nil)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openGame)) { _ in
+            selectedTab = 0
+        }
         .animation(.easeInOut(duration: 0.4), value: userId == -69420)
     }
 }

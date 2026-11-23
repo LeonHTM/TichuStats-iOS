@@ -15,10 +15,10 @@ struct GameSummaryShareView: View {
     let accentCo: Color
 
     // MARK: - Helpers
-    
+
     private var currentGame: Game? {
-        NetworkService.shared.games.first(where:{$0.id == currentGameId})
-        }
+        NetworkService.shared.games.first(where: { $0.id == currentGameId })
+    }
 
     private var allRounds: [Round] {
         rounds.filter { $0.gameId == currentGameId }
@@ -30,147 +30,112 @@ struct GameSummaryShareView: View {
         return profiles.first { $0.id == id }
     }
 
-    private var team1Profiles: [Profile] {
-        
-        [profile(for: currentGame?.team1Player1Id ?? 0),
-         profile(for: currentGame?.team1Player2Id ?? 0)].compactMap { $0 }
+
+    private var team1Ids: [Int?] {
+        [currentGame?.team1Player1Id, currentGame?.team1Player2Id]
     }
 
-    private var team2Profiles: [Profile] {
-        [profile(for: currentGame?.team2Player1Id ?? 0),
-         profile(for: currentGame?.team2Player2Id ?? 0)].compactMap { $0 }
+    private var team2Ids: [Int?] {
+        [currentGame?.team2Player1Id, currentGame?.team2Player2Id]
+    }
+
+    // Resolves a display name for any player id, including guests.
+    private func playerName(_ id: Int?) -> String {
+        let unknown = String(localized: "general.unknown")
+        guard let id, let game = currentGame else { return unknown }
+        switch id {
+        case -2: return game.guest2Name ?? String(localized: "play.guest")
+        case -3: return game.guest3Name ?? String(localized: "play.guest")
+        case -4: return game.guest4Name ?? String(localized: "play.guest")
+        default: return profile(for: id)?.name ?? unknown
+        }
+    }
+
+    private func shortName(_ id: Int?) -> String {
+        guard id != nil else { return "Uk" }
+        return String(playerName(id).prefix(2))
     }
 
     func gameWinner() -> String {
-        if let currentGame{
-            if currentGame.winner == 1{
-                return String(format:String(localized:"general.team"),"1")
-            }else if currentGame.winner == 2{
-                return String(format:String(localized:"general.team"),"2")
-            }else if currentGame.winner == 3{
-                return String(localized:"general.tie")
-            }else{
-                return String(localized:"general.unknown")
-            }
-        }else{
-            return String(localized:"general.unknown")
+        guard let currentGame else { return String(localized: "general.unknown") }
+        switch currentGame.winner {
+        case 1: return String(format: String(localized: "general.team"), "1")
+        case 2: return String(format: String(localized: "general.team"), "2")
+        case 3: return String(localized: "general.tie")
+        default: return String(localized: "general.unknown")
         }
     }
-    
-    
-    func profileName(profile: Profile) -> String{
-        if let currentGame{
-            if profile.id == -2 {
-                return currentGame.guest2Name ?? String(localized:"general.unknown")
-            }else if profile.id == -3{
-                return currentGame.guest3Name ?? String(localized:"general.unknown")
-            }else if profile.id == -4{
-                return currentGame.guest4Name ?? String(localized:"general.unknown")
-            }else{
-                return profile.name ?? String(localized:"general.unknown")
-            }
-        }else{
-            return String(localized:"general.unknown")
-        }
-    }
-    
 
-    // Returns finishing place (1–4) of a profile in a round, based on firstProfileId etc.
-    private func place(of profile: Profile, in round: Round) -> String {
-        if round.firstProfileId == profile.id  { return "1" }
-        if round.secondProfileId == profile.id { return "2" }
-        if round.thirdProfileId == profile.id  { return "3" }
+    // Returns finishing place (1–4) of a player in a round, based on firstProfileId etc.
+    private func place(of id: Int, in round: Round) -> String {
+        if round.firstProfileId == id  { return "1" }
+        if round.secondProfileId == id { return "2" }
+        if round.thirdProfileId == id  { return "3" }
         return "4"
     }
 
-    private func bombs(of profile: Profile, in round: Round) -> Int {
-        if round.firstProfileId  == profile.id { return round.firstBombs }
-        if round.secondProfileId == profile.id { return round.secondBombs }
-        if round.thirdProfileId  == profile.id { return round.thirdBombs }
+    private func bombs(of id: Int, in round: Round) -> Int {
+        if round.firstProfileId  == id { return round.firstBombs }
+        if round.secondProfileId == id { return round.secondBombs }
+        if round.thirdProfileId  == id { return round.thirdBombs }
         return round.fourthBombs
     }
 
-    private func teamPlacement(profiles: [Profile], currentRound: Round) -> some View {
-        let p0Place = profiles.count > 0 ? place(of: profiles[0], in: currentRound) : "?"
-        let p1Place = profiles.count > 1 ? place(of: profiles[1], in: currentRound) : "?"
+    private func teamPlacement(ids: [Int?], currentRound: Round) -> some View {
+        let p0Place = ids[0].map { place(of: $0, in: currentRound) } ?? "?"
+        let p1Place = ids[1].map { place(of: $0, in: currentRound) } ?? "?"
         return Text("(\(p0Place)/\(p1Place))").monospaced()
     }
 
-    private func announcementInfo(for profile: Profile, in round: Round) -> (text: String, color: Color) {
-        let won = round.firstProfileId == profile.id
+    private func announcementInfo(for id: Int, in round: Round) -> (text: String, color: Color) {
+        let won = round.firstProfileId == id
         let resultColor: Color = won ? .green : .red
 
-        if round.announcedBigTichu.contains(profile.id) {
+        if round.announcedBigTichu.contains(id) {
             return ("T", resultColor)
-        } else if round.announcedTichu.contains(profile.id) {
+        } else if round.announcedTichu.contains(id) {
             return ("t", resultColor)
-        } else if round.announcedPingu.contains(profile.id) {
+        } else if round.announcedPingu.contains(id) {
             return ("P", resultColor)
         }
         return ("C", .clear)
     }
 
-    private func teamAnnounced(profiles: [Profile], round: Round, lead: String) -> some View {
-        let p0 = profiles.count > 0 ? profiles[0] : nil
-        let p1 = profiles.count > 1 ? profiles[1] : nil
+    private func playerAnnounced(id: Int?, round: Round, lead: String) -> some View {
+        let info = id.map { announcementInfo(for: $0, in: round) }
+        let bomb = id.map { bombs(of: $0, in: round) } ?? 0
+        let name = shortName(id)
+        let alignment: Alignment = lead == "trailing" ? .trailing : .leading
 
-        let info0 = p0.map { announcementInfo(for: $0, in: round) }
-        let info1 = p1.map { announcementInfo(for: $0, in: round) }
-
-        let bomb0 = p0.map { bombs(of: $0, in: round) } ?? 0
-        let bomb1 = p1.map { bombs(of: $0, in: round) } ?? 0
-
-        let name0 = p0?.name.flatMap { String($0.prefix(2)) } ?? "Uk"
-        let name1 = p1?.name.flatMap { String($0.prefix(2)) } ?? "Uk"
-
-        return HStack {
-            if let info0, info0.text != "C" {
+        return Group {
+            if let info, info.text != "C" {
                 HStack {
                     if lead == "leading" {
-                        Text(name0).foregroundStyle(info0.color).lineLimit(1)
-                        Text("\(bomb0)")
-                        Text(info0.text).foregroundStyle(info0.color).lineLimit(1)
+                        Text(name).foregroundStyle(info.color).lineLimit(1)
+                        Text("\(bomb)")
+                        Text(info.text).foregroundStyle(info.color).lineLimit(1)
                     } else {
-                        Text(info0.text).foregroundStyle(info0.color).lineLimit(1)
-                        Text(name0).foregroundStyle(info0.color).lineLimit(1)
-                        Text("\(bomb0)")
+                        Text(info.text).foregroundStyle(info.color).lineLimit(1)
+                        Text(name).foregroundStyle(info.color).lineLimit(1)
+                        Text("\(bomb)")
                     }
                 }
-                .font(.system(size: 17))
-                .frame(width: 60, alignment: lead == "trailing" ? .trailing : .leading)
             } else {
                 HStack {
-                    Text(name0).lineLimit(1)
-                    Text("\(bomb0)")
+                    Text(name).lineLimit(1)
+                    Text("\(bomb)")
                 }
-                .font(.system(size: 17))
-                .frame(width: 60, alignment: lead == "trailing" ? .trailing : .leading)
-                .monospaced()
             }
+        }
+        .font(.system(size: 17))
+        .monospaced()
+        .frame(width: 60, alignment: alignment)
+    }
 
-            if let info1, info1.text != "C" {
-                HStack {
-                    if lead == "leading" {
-                        Text(name1).foregroundStyle(info1.color).lineLimit(1)
-                        Text("\(bomb1)")
-                        Text(info1.text).foregroundStyle(info1.color).lineLimit(1)
-                    } else {
-                        Text(info1.text).foregroundStyle(info1.color).lineLimit(1)
-                        Text(name1).foregroundStyle(info1.color).lineLimit(1)
-                        Text("\(bomb1)")
-                    }
-                }
-                .font(.system(size: 17))
-                .frame(width: 60, alignment: lead == "trailing" ? .trailing : .leading)
-                .monospaced()
-            } else {
-                HStack {
-                    Text(name1).lineLimit(1)
-                    Text("\(bomb1)")
-                }
-                .font(.system(size: 17))
-                .frame(width: 60, alignment: lead == "trailing" ? .trailing : .leading)
-            }
+    private func teamAnnounced(ids: [Int?], round: Round, lead: String) -> some View {
+        HStack {
+            playerAnnounced(id: ids[0], round: round, lead: lead)
+            playerAnnounced(id: ids[1], round: round, lead: lead)
         }
         .opacity(colorScheme == .dark ? 0.66 : 1)
     }
@@ -179,29 +144,22 @@ struct GameSummaryShareView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            //Was I high when i wrote this? what kinda dark wizard magic shit is this
             Text(String(localized: "gamesummaryshare.title"))
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
+            // Team names
             HStack {
                 VStack {
-                    Text(String(format:String(localized: "general.team.double"), String(1))).fontWeight(.bold)
-                    Text(team1Profiles.count > 0 ? profileName(profile: team1Profiles[0]) : String(localized: "general.unknown"))
-                        .font(.title).fontWeight(.bold)
-                    Text(team1Profiles.count > 0 ? profileName(profile: team1Profiles[1]) : String(localized: "general.unknown"))
-                        .font(.title).fontWeight(.bold)
-                        .font(.title).fontWeight(.bold)
+                    Text(String(format: String(localized: "general.team.double"), String(1))).fontWeight(.bold)
+                    Text(playerName(team1Ids[0])).font(.title).fontWeight(.bold)
+                    Text(playerName(team1Ids[1])).font(.title).fontWeight(.bold)
                 }.foregroundStyle(accentCo)
                 Spacer()
                 VStack {
-                    Text(String(format:String(localized: "general.team.double"), String(2))).fontWeight(.bold)
-                    Text(team1Profiles.count > 0 ? profileName(profile: team2Profiles[0]) : String(localized: "general.unknown"))
-                        .font(.title).fontWeight(.bold)
-                        .font(.title).fontWeight(.bold)
-                    Text(team1Profiles.count > 0 ? profileName(profile: team2Profiles[1]) : String(localized: "general.unknown"))
-                        .font(.title).fontWeight(.bold)
-                        .font(.title).fontWeight(.bold)
+                    Text(String(format: String(localized: "general.team.double"), String(2))).fontWeight(.bold)
+                    Text(playerName(team2Ids[0])).font(.title).fontWeight(.bold)
+                    Text(playerName(team2Ids[1])).font(.title).fontWeight(.bold)
                 }
             }.padding(.horizontal, 30)
 
@@ -210,9 +168,10 @@ struct GameSummaryShareView: View {
             )
             .frame(height: 250)
 
+            // Score
             HStack {
                 VStack {
-                    Text(String(format:String(localized: "general.team"), String(1)))
+                    Text(String(format: String(localized: "general.team"), String(1)))
                         .font(.headline)
                         .foregroundStyle(accentCo)
                     Text("\(currentGame?.currentPointsTeam1 ?? 0)")
@@ -223,34 +182,35 @@ struct GameSummaryShareView: View {
                 Spacer()
                 VStack {
                     Text(String(format: String(localized: "gamesummaryshare.target"), String(currentGame?.target ?? 1000))).fontWeight(.bold)
-                    Text(String(format: String(localized: "gamesummaryshare.winner"), String(gameWinner()))).fontWeight(.bold)
-                        .foregroundStyle(gameWinner() == String(format:String(localized: "general.team"), String(1)) ? accentCo : Color.primary)
+                    Text(String(format: String(localized: "gamesummaryshare.winner"), gameWinner())).fontWeight(.bold)
+                        .foregroundStyle(currentGame?.winner == 1 ? accentCo : Color.primary)
                 }
                 Spacer()
                 VStack {
-                    Text(String(format:String(localized: "general.team"), String(2))).font(.headline)
+                    Text(String(format: String(localized: "general.team"), String(2))).font(.headline)
                     Text("\(currentGame?.currentPointsTeam2 ?? 0)")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                 }
             }.padding(.horizontal, 30)
 
+            // Round details
             Text(String(localized: "gamesummaryshare.details")).fontWeight(.bold).font(.title)
             HStack {
-                Text(String(format:String(localized: "general.team"), String(1))).padding(.trailing, 23).foregroundStyle(accentCo)
+                Text(String(format: String(localized: "general.team"), String(1))).padding(.trailing, 23).foregroundStyle(accentCo)
                 Text(String(localized: "gamesummaryshare.rounds")).fontWeight(.bold)
-                Text(String(format:String(localized: "general.team"), String(2))).padding(.leading, 20)
+                Text(String(format: String(localized: "general.team"), String(2))).padding(.leading, 20)
             }
 
             HStack(alignment: .top) {
                 VStack {
                     ForEach(allRounds) { currentRound in
                         HStack {
-                            teamPlacement(profiles: team1Profiles, currentRound: currentRound)
+                            teamPlacement(ids: team1Ids, currentRound: currentRound)
                                 .frame(width: 60, alignment: .trailing)
                                 .padding(.trailing, 60)
 
-                            teamAnnounced(profiles: team1Profiles, round: currentRound, lead: "trailing")
+                            teamAnnounced(ids: team1Ids, round: currentRound, lead: "trailing")
                                 .frame(width: 65, alignment: .trailing)
 
                             Text("\(currentRound.tichuPointsTeam1)")
@@ -269,10 +229,10 @@ struct GameSummaryShareView: View {
                                 .frame(width: 50, alignment: .leading)
                                 .monospaced()
 
-                            teamAnnounced(profiles: team2Profiles, round: currentRound, lead: "leading")
+                            teamAnnounced(ids: team2Ids, round: currentRound, lead: "leading")
                                 .frame(width: 65, alignment: .leading)
 
-                            teamPlacement(profiles: team2Profiles, currentRound: currentRound)
+                            teamPlacement(ids: team2Ids, currentRound: currentRound)
                                 .frame(width: 60, alignment: .leading)
                                 .padding(.leading, 60)
                         }
@@ -285,10 +245,12 @@ struct GameSummaryShareView: View {
                 Image("AppLogo").resizable().frame(width: 45, height: 45)
             }
 
-        }.frame(width: 500).background(colorScheme == .dark ? Color.black : Color.white)
+        }
+        .frame(width: 500)
+        .background(colorScheme == .dark ? Color.black : Color.white)
     }
 }
 
-#Preview{
-    GameSummaryShareView(currentGameId:20,rounds:[],profiles: [],accentCo: .accentColor,)
+#Preview {
+    GameSummaryShareView(currentGameId: 20, rounds: [], profiles: [], accentCo: .accentColor)
 }

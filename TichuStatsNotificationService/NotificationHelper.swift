@@ -11,6 +11,7 @@ import UserNotifications
 extension Notification.Name {
     static let didTapPushNotification = Notification.Name("didTapPushNotification")
     static let openFriendsSheet = Notification.Name("openFriendsSheet")
+    static let openGame = Notification.Name("openGame")
 }
 
 @MainActor
@@ -45,10 +46,21 @@ class CustomAppDelegate: NSObject, UIApplicationDelegate {
 extension CustomAppDelegate: UNUserNotificationCenterDelegate {
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        print("Notification tapped:", response.notification.request.content.title)
 
         let userInfo = response.notification.request.content.userInfo
 
+        // Game pushes: open the game directly
+        if userInfo["type"] as? String == "game_added",
+           let gameId = userInfo["game_id"] as? Int {
+            NotificationCenter.default.post(
+                name: .openGame,
+                object: nil,
+                userInfo: ["game_id": gameId]
+            )
+            return
+        }
+
+        // Everything else (friend requests etc.)
         NotificationCenter.default.post(
             name: .didTapPushNotification,
             object: nil,
@@ -67,7 +79,9 @@ func removeFriendRequestNotification(fromSenderId senderId: Int) {
             .filter { notification in
                 let userInfo = notification.request.content.userInfo
                 let id = userInfo["sender_id"] as? String
-                return id == String(senderId)
+                let type = userInfo["type"] as? String
+                // Don't clear game notifications from the same sender
+                return id == String(senderId) && type != "game_added"
             }
             .map { $0.request.identifier }
 
